@@ -1,0 +1,13 @@
+{
+  "name": "tmp-photopea",
+  "description": "Manipulate images using Photopea",
+  "contributes": {
+    "integrations": {
+      "photopea": {
+        "title": "Edit with Photopea",
+        "accept": ["image/*"],
+        "url": "https://dtinth.github.io/tmp-photopea/"
+      }
+    }
+  }
+}

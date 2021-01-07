@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en" data-dtinth>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>tmp-photopea</title>
+  </head>
+  <body style="background: black">
+    <div style="position: fixed; top: 0px; right: 0; bottom: 0; left: 0">
+      <iframe
+        id="photopea"
+        style="
+          display: block;
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          box-sizing: border-box;
+          border: none;
+        "
+        onload="iframeLoaded(this)"
+      ></iframe>
+    </div>
+    <script>
+      let fileToLoad
+      let filename
+      let pp
+
+      const matchmake = () => {
+        if (fileToLoad && pp) {
+          pp.postMessage(fileToLoad, '*')
+          fileToLoad = null
+        }
+      }
+      const startTmpSessionWith = (targetWindow, sessionId) => {
+        window.addEventListener('message', async (e) => {
+          if (!e.data) return
+          if (e.source === photopea.contentWindow) {
+            if (e.data === 'done' && !pp) {
+              pp = e.source
+              matchmake()
+              return
+            }
+            if (e.data === 'save') {
+              pp.postMessage("app.activeDocument.saveToOE('png')", '*')
+            }
+            if (e.data instanceof ArrayBuffer) {
+              const blob = new Blob([e.data], { type: 'image/png' })
+              targetWindow.postMessage(
+                {
+                  jsonrpc: '2.0',
+                  method: 'tmp/newFile',
+                  params: { sessionId, name: filename, blob },
+                  id: 'getfile',
+                },
+                '*'
+              )
+            }
+          }
+          if (typeof e.data !== 'object') return
+          if (e.data.id === 'getfile') {
+            fileToLoad = await e.data.result.blob.arrayBuffer()
+            filename = e.data.result.file.name
+            matchmake()
+            return
+          }
+        })
+        targetWindow.postMessage(
+          {
+            jsonrpc: '2.0',
+            method: 'tmp/getOpenedFile',
+            params: { sessionId },
+            id: 'getfile',
+          },
+          '*'
+        )
+      }
+      {
+        const match = location.hash.match(/tmpsessionid=([\w-]+)/)
+        if (window.opener && match) {
+          startTmpSessionWith(window.opener, match[1])
+        }
+      }
+
+      photopea.src =
+        'https://www.photopea.com#' +
+        encodeURI(
+          JSON.stringify({
+            environment: {
+              customIO: {
+                save: "app.echoToOE('save')",
+              },
+            },
+          })
+        )
+    </script>
+  </body>
+</html>

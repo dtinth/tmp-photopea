@@ -1,0 +1,13 @@
+{
+  "name": "tmp-photopea [dev]",
+  "description": "Manipulate images using Photopea",
+  "contributes": {
+    "integrations": {
+      "photopea": {
+        "title": "[Dev] Edit with Photopea",
+        "accept": ["image/*"],
+        "url": "http://localhost:3002/"
+      }
+    }
+  }
+}
